@@ -6,6 +6,7 @@ import com.project.bloggy.dto.UserResponse;
 import com.project.bloggy.entity.User;
 import com.project.bloggy.entity.UserRole;
 import com.project.bloggy.repository.UserRepository;
+import com.project.bloggy.security.JwtUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -27,6 +28,9 @@ public class AuthService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private JwtUtils jwtUtils;
+
     public UserResponse login(LoginRequest loginRequest) {
         try {
             authenticationManager.authenticate(
@@ -39,11 +43,14 @@ public class AuthService {
             User user = userRepository.findByEmail(loginRequest.getEmail())
                     .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
+            String token = jwtUtils.generateToken(user.getEmail());
+
             return new UserResponse(
                     user.getId(),
                     user.getUsername(),
                     user.getEmail(),
-                    user.getRole()
+                    user.getRole(),
+                    token
             );
 
         } catch (BadCredentialsException e) {
@@ -57,20 +64,28 @@ public class AuthService {
             throw new RuntimeException("Email already exists");
         }
 
+        // Create new user
         User user = new User();
         user.setEmail(signupRequest.getEmail());
         user.setUsername(signupRequest.getUsername());
         user.setPassword(passwordEncoder.encode(signupRequest.getPassword()));
         user.setRole(signupRequest.getRole() != null ? signupRequest.getRole() : UserRole.ROLE_USER);
 
+        // Save user
         User savedUser = userRepository.save(user);
 
+        // Generate JWT token immediately
+        String token = jwtUtils.generateToken(savedUser.getEmail());
+
+        // Return UserResponse with token
         return new UserResponse(
                 savedUser.getId(),
                 savedUser.getUsername(),
                 savedUser.getEmail(),
-                savedUser.getRole()
+                savedUser.getRole(),
+                token
         );
     }
+
 
 }
