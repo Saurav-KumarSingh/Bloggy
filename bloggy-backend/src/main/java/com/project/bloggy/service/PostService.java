@@ -14,6 +14,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class PostService {
@@ -88,5 +89,28 @@ public class PostService {
 
         return responseList;
     }
+
+    public PostResponse getPostById(Long id) {
+        // Fetch the post by ID or throw an exception if not found
+        Post post = postRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Post not found with id: " + id));
+
+        // Convert Post entity to PostResponse
+        PostResponse postResponse = new PostResponse();
+        postResponse.setId(post.getId());
+        postResponse.setTitle(post.getTitle());
+        postResponse.setContent(post.getContent());
+        postResponse.setImageUrl(post.getImageUrl());
+        postResponse.setCreatedAt(post.getCreatedAt());
+        postResponse.setUpdatedAt(post.getUpdatedAt());
+
+        // Safely set the user ID if present
+        if (post.getUser() != null) {
+            postResponse.setUserId(post.getUser().getId());
+        }
+
+        return postResponse;
+    }
+
 
 }
