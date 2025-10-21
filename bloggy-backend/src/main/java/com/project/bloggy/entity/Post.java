@@ -28,6 +28,8 @@ public class Post {
 
     private LocalDateTime updatedAt;
 
+    private String imageUrl;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
@@ -37,9 +39,12 @@ public class Post {
     private List<Comment> comments;
 
 
+
     @PrePersist
     protected void onCreate() {
+
         this.createdAt = LocalDateTime.now();
+        this.updatedAt=LocalDateTime.now();
     }
 
     @PreUpdate
