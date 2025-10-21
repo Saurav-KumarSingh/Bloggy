@@ -57,5 +57,14 @@ public class PostController {
         }
     }
 
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> deletePost(@PathVariable Long id, Authentication authentication) {
+        try {
+            postService.deletePost(id, authentication);
+            return ResponseEntity.ok("Post deleted successfully");
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(403).body(e.getMessage()); // Forbidden if not owner
+        }
+    }
 
 }

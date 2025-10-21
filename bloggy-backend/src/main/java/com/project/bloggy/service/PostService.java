@@ -146,5 +146,21 @@ public class PostService {
     }
 
 
+    public void deletePost(Long id, Authentication authentication) {
+        // Fetch the post or throw exception if not found
+        Post post = postRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Post not found with id: " + id));
+
+        // Get logged-in user's email
+        String loggedInEmail = authentication.getName();
+
+        // Check if the logged-in user is the owner of the post
+        if (!post.getUser().getEmail().equals(loggedInEmail)) {
+            throw new RuntimeException("You are not authorized to delete this post");
+        }
+
+        // Delete the post
+        postRepository.delete(post);
+    }
 
 }
