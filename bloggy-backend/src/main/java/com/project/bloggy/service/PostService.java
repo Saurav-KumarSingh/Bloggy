@@ -113,4 +113,38 @@ public class PostService {
     }
 
 
+    public PostResponse updatePost(Long id, PostRequest postRequest, Authentication authentication) {
+
+        Post post = postRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Post not found with id: " + id));
+
+        String loggedInEmail = authentication.getName();
+
+        // Check if the logged-in user is the owner of the post
+        if (!post.getUser().getEmail().equals(loggedInEmail)) {
+            throw new RuntimeException("You are not authorized to update this post");
+        }
+
+        // Update fields
+        post.setTitle(postRequest.getTitle());
+        post.setContent(postRequest.getContent());
+
+        // Save updated post
+        Post updatedPost = postRepository.save(post);
+
+        // Convert to PostResponse
+        PostResponse postResponse = new PostResponse();
+        postResponse.setId(updatedPost.getId());
+        postResponse.setTitle(updatedPost.getTitle());
+        postResponse.setContent(updatedPost.getContent());
+        postResponse.setImageUrl(updatedPost.getImageUrl());
+        postResponse.setCreatedAt(updatedPost.getCreatedAt());
+        postResponse.setUpdatedAt(updatedPost.getUpdatedAt());
+        postResponse.setUserId(updatedPost.getUser().getId());
+
+        return postResponse;
+    }
+
+
+
 }

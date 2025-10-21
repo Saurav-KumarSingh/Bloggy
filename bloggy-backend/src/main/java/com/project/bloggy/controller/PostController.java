@@ -1,5 +1,6 @@
 package com.project.bloggy.controller;
 
+import com.project.bloggy.dto.PostRequest;
 import com.project.bloggy.dto.PostResponse;
 import com.project.bloggy.entity.Post;
 import com.project.bloggy.service.PostService;
@@ -42,4 +43,19 @@ public class PostController {
     public PostResponse getPostById(@PathVariable Long id){
         return postService.getPostById(id);
     }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updatePost(
+            @PathVariable Long id,
+            @RequestBody PostRequest postRequest,
+            Authentication authentication) {
+        try {
+            PostResponse updatedPost = postService.updatePost(id, postRequest, authentication);
+            return ResponseEntity.ok(updatedPost);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(403).body(e.getMessage()); // 403 Forbidden for unauthorized users
+        }
+    }
+
+
 }
