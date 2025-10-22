@@ -90,4 +90,31 @@ public class CommentService {
         commentRepository.delete(comment);
     }
 
+    public CommentResponse updateComment(CommentRequest commentRequest, Authentication auth) {
+        // Fetch the comment by ID from request body
+        Comment comment = commentRepository.findById(commentRequest.getId())
+                .orElseThrow(() -> new RuntimeException("Comment not found with id: " + commentRequest.getId()));
+
+        // Check if logged-in user is the author
+        String loggedInEmail = auth.getName();
+        if (!comment.getUser().getEmail().equals(loggedInEmail)) {
+            throw new RuntimeException("You are not authorized to update this comment");
+        }
+
+        // Update content
+        comment.setContent(commentRequest.getContent());
+        Comment updatedComment = commentRepository.save(comment);
+
+        // Map to DTO
+        CommentResponse response = new CommentResponse();
+        response.setId(updatedComment.getId());
+        response.setContent(updatedComment.getContent());
+        response.setUserId(updatedComment.getUser().getId());
+        response.setUsername(updatedComment.getUser().getUsername());
+        response.setCreatedAt(updatedComment.getCreatedAt());
+
+        return response;
+    }
+
+
 }

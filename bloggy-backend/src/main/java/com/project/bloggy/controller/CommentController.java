@@ -9,7 +9,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 
 @RestController
 @RequestMapping("/comment")
@@ -33,5 +32,18 @@ public class CommentController {
             return ResponseEntity.status(403).body(e.getMessage()); // 403 Forbidden for unauthorized
         }
     }
+
+    @PutMapping
+    public ResponseEntity<?> updateComment(
+            @RequestBody CommentRequest commentRequest,
+            Authentication auth) {
+        try {
+            CommentResponse updatedComment = commentService.updateComment(commentRequest, auth);
+            return ResponseEntity.ok(updatedComment);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(403).body(e.getMessage());
+        }
+    }
+
 
 }

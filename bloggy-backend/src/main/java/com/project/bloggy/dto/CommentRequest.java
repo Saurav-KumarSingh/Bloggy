@@ -11,7 +11,7 @@ import lombok.Setter;
 @AllArgsConstructor
 public class CommentRequest {
 
+    private Long id;
     private String content;
-
     private Long postId;
 }
