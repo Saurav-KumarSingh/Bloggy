@@ -34,9 +34,14 @@ public class PostController {
         }
     }
 
+//    @GetMapping("/")
+//    public List<PostResponse> getAllPosts() {
+//        return postService.getAllPosts();
+//    }
+
     @GetMapping("/")
-    public List<PostResponse> getAllPosts() {
-        return postService.getAllPosts();
+    public List<PostResponse> getAllPostsWithComments() {
+        return postService.getAllPostsWithComments();
     }
 
     @GetMapping("/{id}")

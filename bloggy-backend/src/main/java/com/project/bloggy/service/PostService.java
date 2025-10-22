@@ -1,8 +1,10 @@
 package com.project.bloggy.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.project.bloggy.dto.CommentResponse;
 import com.project.bloggy.dto.PostRequest;
 import com.project.bloggy.dto.PostResponse;
+import com.project.bloggy.entity.Comment;
 import com.project.bloggy.entity.Post;
 import com.project.bloggy.entity.User;
 import com.project.bloggy.repository.PostRepository;
@@ -14,7 +16,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class PostService {
@@ -31,28 +32,22 @@ public class PostService {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     public String createPost(String postJson, MultipartFile file, Authentication authentication) throws Exception {
-        // Log received JSON
-        System.out.println("Received post JSON: " + postJson);
+
 
         // Parse JSON
         PostRequest postRequest = objectMapper.readValue(postJson, PostRequest.class);
 
         // Fetch logged-in user from JWT
         String email = authentication.getName();
-        System.out.println("Authenticated user's email from JWT: " + email);
 
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        System.out.println("Fetched user from DB: " + user.getUsername() + ", ID: " + user.getId());
 
         // Handle image upload
         String imageUrl = null;
         if (file != null && !file.isEmpty()) {
             imageUrl = imageUploadService.uploadImage(file);
-            System.out.println("Uploaded image URL: " + imageUrl);
-        } else {
-            System.out.println("No image uploaded");
         }
 
         // Create post
@@ -63,35 +58,69 @@ public class PostService {
         post.setUser(user); // assign logged-in user
 
         postRepository.save(post);
-        System.out.println("Post saved successfully with ID: " + post.getId());
 
         // ✅ Return a simple success message
         return "Post uploaded successfully!";
     }
 
 
-    public List<PostResponse> getAllPosts() {
-        List<Post> posts = postRepository.findAll();
+//    public List<PostResponse> getAllPosts() {
+//        List<Post> posts = postRepository.findAll();
+//        List<PostResponse> responseList = new ArrayList<>();
+//
+//        for (Post post : posts) {
+//            PostResponse response = new PostResponse();
+//            response.setId(post.getId());
+//            response.setTitle(post.getTitle());
+//            response.setContent(post.getContent());
+//            response.setImageUrl(post.getImageUrl());
+//            response.setCreatedAt(post.getCreatedAt());
+//            response.setUpdatedAt(post.getUpdatedAt());
+//            response.setUserId(post.getUser().getId());
+//
+//            responseList.add(response);
+//        }
+//
+//        return responseList;
+//    }
+
+
+    public List<PostResponse> getAllPostsWithComments() {
+        List<Post> posts = postRepository.findAll(); // simple findAll
         List<PostResponse> responseList = new ArrayList<>();
 
         for (Post post : posts) {
-            PostResponse response = new PostResponse();
-            response.setId(post.getId());
-            response.setTitle(post.getTitle());
-            response.setContent(post.getContent());
-            response.setImageUrl(post.getImageUrl());
-            response.setCreatedAt(post.getCreatedAt());
-            response.setUpdatedAt(post.getUpdatedAt());
-            response.setUserId(post.getUser().getId());
+            PostResponse postResponse = new PostResponse();
+            postResponse.setId(post.getId());
+            postResponse.setTitle(post.getTitle());
+            postResponse.setContent(post.getContent());
+            postResponse.setImageUrl(post.getImageUrl());
+            postResponse.setUserId(post.getUser().getId());
+            postResponse.setUsername(post.getUser().getUsername());
+            postResponse.setCreatedAt(post.getCreatedAt());
+            postResponse.setUpdatedAt(post.getUpdatedAt());
 
-            responseList.add(response);
+            // Add all comments for this post
+            List<CommentResponse> commentResponses = new ArrayList<>();
+            for (Comment comment : post.getComments()) {
+                CommentResponse cr = new CommentResponse();
+                cr.setId(comment.getId());
+                cr.setContent(comment.getContent());
+                cr.setUserId(comment.getUser().getId());
+                cr.setUsername(comment.getUser().getUsername());
+                cr.setCreatedAt(comment.getCreatedAt());
+                commentResponses.add(cr);
+            }
+            postResponse.setComments(commentResponses);
+
+            responseList.add(postResponse);
         }
 
         return responseList;
     }
 
     public PostResponse getPostById(Long id) {
-        // Fetch the post by ID or throw an exception if not found
+        // Fetch the post by ID or throw exception if not found
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Post not found with id: " + id));
 
@@ -104,13 +133,30 @@ public class PostService {
         postResponse.setCreatedAt(post.getCreatedAt());
         postResponse.setUpdatedAt(post.getUpdatedAt());
 
-        // Safely set the user ID if present
+        // Safely set the user info if present
         if (post.getUser() != null) {
             postResponse.setUserId(post.getUser().getId());
+            postResponse.setUsername(post.getUser().getUsername());
         }
+
+        // Add all comments for this post
+        List<CommentResponse> commentResponses = new ArrayList<>();
+        if (post.getComments() != null) {
+            for (Comment comment : post.getComments()) {
+                CommentResponse cr = new CommentResponse();
+                cr.setId(comment.getId());
+                cr.setContent(comment.getContent());
+                cr.setUserId(comment.getUser().getId());
+                cr.setUsername(comment.getUser().getUsername());
+                cr.setCreatedAt(comment.getCreatedAt());
+                commentResponses.add(cr);
+            }
+        }
+        postResponse.setComments(commentResponses);
 
         return postResponse;
     }
+
 
 
     public PostResponse updatePost(Long id, PostRequest postRequest, Authentication authentication) {
@@ -151,10 +197,8 @@ public class PostService {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Post not found with id: " + id));
 
-        // Get logged-in user's email
         String loggedInEmail = authentication.getName();
 
-        // Check if the logged-in user is the owner of the post
         if (!post.getUser().getEmail().equals(loggedInEmail)) {
             throw new RuntimeException("You are not authorized to delete this post");
         }
