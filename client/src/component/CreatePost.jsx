@@ -1,10 +1,11 @@
 import React, { useState } from "react";
+import axios from "axios";
 
 export default function CreatePostPage() {
   const [formData, setFormData] = useState({
     title: "",
-    author: "",
     image: "",
+    imageFile: null,
     content: "",
   });
 
@@ -17,15 +18,55 @@ export default function CreatePostPage() {
     const file = e.target.files[0];
     if (file) {
       const imageUrl = URL.createObjectURL(file);
-      setFormData((prev) => ({ ...prev, image: imageUrl }));
+      setFormData((prev) => ({
+        ...prev,
+        image: imageUrl,
+        imageFile: file,
+      }));
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    alert("✅ Post created successfully!");
-    // Here you can send formData to your backend (via fetch or axios)
-    console.log(formData);
+    try {
+      const token = localStorage.getItem("token");
+      console.log(token)
+
+      const postJson = {
+        title: formData.title,
+        content: formData.content,
+      };
+
+      const formDataToSend = new FormData();
+      formDataToSend.append("post", JSON.stringify(postJson));
+      if (formData.imageFile) {
+        formDataToSend.append("image", formData.imageFile);
+      }
+
+      const res = await axios.post(
+        `${import.meta.env.VITE_BASE_URL}/post/upload`,
+        formDataToSend,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      alert("✅ Post created successfully!");
+      console.log(res.data);
+
+      setFormData({
+        title: "",
+        image: "",
+        imageFile: null,
+        content: "",
+      });
+    } catch (error) {
+      console.error("Error creating post:", error);
+      alert("❌ Failed to create post");
+    }
   };
 
   return (
@@ -49,22 +90,6 @@ export default function CreatePostPage() {
                 value={formData.title}
                 onChange={handleChange}
                 placeholder="Enter post title"
-                className="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              />
-            </div>
-
-            {/* Author */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Author Name
-              </label>
-              <input
-                type="text"
-                name="author"
-                value={formData.author}
-                onChange={handleChange}
-                placeholder="Your name"
                 className="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
               />
@@ -117,7 +142,6 @@ export default function CreatePostPage() {
             </h2>
             {formData.title || formData.content || formData.image ? (
               <div className="border-t border-gray-200 pt-4">
-                {/* Image Preview */}
                 {formData.image && (
                   <img
                     src={formData.image}
@@ -125,13 +149,9 @@ export default function CreatePostPage() {
                     className="w-full h-56 object-cover rounded-lg mb-4"
                   />
                 )}
-                {/* Post Info */}
                 <h3 className="text-xl font-semibold text-gray-800 mb-2">
                   {formData.title || "Post title"}
                 </h3>
-                <p className="text-sm text-gray-500 mb-3">
-                  By {formData.author || "Author Name"}
-                </p>
                 <p className="text-gray-700 leading-relaxed whitespace-pre-line">
                   {formData.content || "Your post content will appear here..."}
                 </p>

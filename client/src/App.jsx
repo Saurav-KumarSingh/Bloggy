@@ -5,6 +5,7 @@ import Header from "./component/Header";
 import PostShowPage from "./pages/PostShowPage";
 import CreatePostPage from "./component/CreatePost";
 import FloatingButton from "./component/FloatingButton";
+import { MdOutlineAddBox } from "react-icons/md";
 
 function App() {
   return (
@@ -20,7 +21,7 @@ function App() {
         <Route path="/home" element={<PostShowPage />} />
         <Route path="/post" element={<CreatePostPage />} />
       </Routes>
-      <FloatingButton to="/home" character="+"/>
+      <FloatingButton to="/post" character={<MdOutlineAddBox />}/>
     </BrowserRouter>
   );
 }
