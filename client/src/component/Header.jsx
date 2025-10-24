@@ -43,7 +43,7 @@ function Header() {
       <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
         {/* Logo */}
         <Link to="/home" className="text-2xl font-bold text-blue-600">
-          Bloggy<span className="text-gray-800">Verse</span>
+          Bloggy
         </Link>
 
         {/* Desktop Navigation */}
