@@ -20,6 +20,7 @@ function Login() {
         localStorage.setItem("token", result.data.token);
         localStorage.setItem("email", result.data.email);
         localStorage.setItem("username", result.data.username);
+        localStorage.setItem("userId",result.data.id)
         navigate("/home");
       } else {
         console.error("Login failed: No token received");

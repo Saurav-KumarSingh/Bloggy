@@ -5,45 +5,92 @@ export default function PostsPage() {
   const [posts, setPosts] = useState([]);
   const [newComment, setNewComment] = useState({});
 
+  // Get logged-in userId from localStorage
+  const loggedInUserId = localStorage.getItem("userId"); // store this at login
+
   // ✅ Fetch posts from backend
+  const fetchPosts = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await axios.get(`${import.meta.env.VITE_BASE_URL}/post/`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setPosts(res.data);
+    } catch (error) {
+      console.error("Error fetching posts:", error);
+    }
+  };
+
   useEffect(() => {
-    const fetchPosts = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        const res = await axios.get(`${import.meta.env.VITE_BASE_URL}/post/`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setPosts(res.data);
-      } catch (error) {
-        console.error("Error fetching posts:", error);
-      }
-    };
     fetchPosts();
   }, []);
 
-  // 💬 Add comment locally (UI only)
-  const handleAddComment = (postId, e) => {
+  // 💬 Add comment with backend + update UI
+  const handleAddComment = async (postId, e) => {
     e.preventDefault();
-    if (!newComment[postId]?.trim()) return;
-    setPosts((prev) =>
-      prev.map((p) =>
-        p.id === postId
-          ? {
-              ...p,
-              comments: [
-                ...p.comments,
-                {
-                  id: Date.now(),
-                  username: "You",
-                  content: newComment[postId],
-                  createdAt: new Date().toISOString(),
-                },
-              ],
-            }
-          : p
-      )
-    );
-    setNewComment({ ...newComment, [postId]: "" });
+    const commentText = newComment[postId]?.trim();
+    if (!commentText) return;
+
+    const token = localStorage.getItem("token");
+
+    try {
+      const res = await axios.post(
+        `${import.meta.env.VITE_BASE_URL}/comment`,
+        { postId, content: commentText },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const savedComment = res.data;
+
+      setPosts((prev) =>
+        prev.map((p) =>
+          p.id === postId
+            ? {
+                ...p,
+                comments: [...p.comments, savedComment],
+              }
+            : p
+        )
+      );
+
+      setNewComment({ ...newComment, [postId]: "" });
+    } catch (error) {
+      console.error("Error posting comment:", error);
+      alert("Failed to post comment.");
+    }
+  };
+
+  // 🗑 Delete comment (only own comment)
+  const handleDeleteComment = async (postId, commentId) => {
+    const token = localStorage.getItem("token");
+
+    try {
+      await axios.delete(
+        `${import.meta.env.VITE_BASE_URL}/comment/${commentId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      setPosts((prev) =>
+        prev.map((p) =>
+          p.id === postId
+            ? {
+                ...p,
+                comments: p.comments.filter((c) => c.id !== commentId),
+              }
+            : p
+        )
+      );
+    } catch (error) {
+      console.error("Error deleting comment:", error);
+      alert("Failed to delete comment.");
+    }
   };
 
   return (
@@ -112,7 +159,7 @@ export default function PostsPage() {
                             ? comment.username[0].toUpperCase()
                             : "U"}
                         </div>
-                        <div>
+                        <div className="flex-1">
                           <p className="font-medium text-gray-800">
                             {comment.username}
                           </p>
@@ -120,6 +167,18 @@ export default function PostsPage() {
                             {comment.content}
                           </p>
                         </div>
+
+                        {/* Delete button for own comment */}
+                        {comment.userId.toString() === loggedInUserId && (
+                          <button
+                            onClick={() =>
+                              handleDeleteComment(post.id, comment.id)
+                            }
+                            className="ml-2 text-red-500 font-semibold hover:underline"
+                          >
+                            Delete
+                          </button>
+                        )}
                       </div>
                     ))}
                   </div>
