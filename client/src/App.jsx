@@ -6,6 +6,8 @@ import PostShowPage from "./pages/PostShowPage";
 import CreatePostPage from "./component/CreatePost";
 import FloatingButton from "./component/FloatingButton";
 import { MdOutlineAddBox } from "react-icons/md";
+import UserDashboard from "./pages/UserDashboard";
+import EditPostPage from "./component/EditPost";
 
 function App() {
   return (
@@ -13,13 +15,12 @@ function App() {
     <Header></Header>
       <Routes>
         <Route path="/" element={<Login />} />
-        {/* You can add more routes later like this */}
-        {/* <Route path="/" element={<Home />} /> */}
-        {/* <Route path="/register" element={<Register />} /> */}
         
         <Route path="/register" element={<Register />} />
         <Route path="/home" element={<PostShowPage />} />
         <Route path="/post" element={<CreatePostPage />} />
+        <Route path="/profile" element={<UserDashboard />} />
+        <Route path="/edit-post/:postId" element={<EditPostPage />} />
       </Routes>
       <FloatingButton to="/post" character={<MdOutlineAddBox />}/>
     </BrowserRouter>

@@ -1,7 +1,9 @@
 import React, { useState } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 export default function CreatePostPage() {
+  const navigate=useNavigate();
   const [formData, setFormData] = useState({
     title: "",
     image: "",
@@ -56,6 +58,8 @@ export default function CreatePostPage() {
 
       alert("✅ Post created successfully!");
       console.log(res.data);
+
+      navigate("/home")
 
       setFormData({
         title: "",

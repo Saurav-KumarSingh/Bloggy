@@ -1,36 +1,57 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const navigate = useNavigate();
 
-  // Simulate logged-in state for now
-  const isLoggedIn = false; // You can later replace with actual auth check (e.g. JWT in localStorage)
+  // Check if user is logged in
+  const isLoggedIn = !!localStorage.getItem("userId");
+  const username = localStorage.getItem("username");
+
+  // Logout handler
+  const handleLogout = async () => {
+  try {
+    // Optionally, call backend logout endpoint if you have one
+    const token = localStorage.getItem("token");
+    if (token) {
+      await fetch(`${import.meta.env.VITE_BASE_URL}/logout`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+    }
+
+    // Remove all app-related storage
+    localStorage.removeItem("token");
+    localStorage.removeItem("userId");
+    localStorage.removeItem("username");
+    localStorage.removeItem("email");
+
+    // Redirect to login page
+    navigate("/")
+  } catch (err) {
+    console.error("Logout failed:", err);
+  }
+};
+
 
   return (
     <header className="bg-white shadow-md sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
         {/* Logo */}
-        <Link to="/" className="text-2xl font-bold text-blue-600">
+        <Link to="/home" className="text-2xl font-bold text-blue-600">
           Bloggy<span className="text-gray-800">Verse</span>
         </Link>
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex space-x-6 text-gray-700 font-medium">
-          <Link to="/" className="hover:text-blue-600 transition">
-            Home
-          </Link>
-          <Link to="/posts" className="hover:text-blue-600 transition">
-            Posts
-          </Link>
-          {isLoggedIn && (
-            <Link to="/create-post" className="hover:text-blue-600 transition">
-              Create Post
-            </Link>
-          )}
+          {/* You can add other links here */}
         </nav>
 
-        {/* Auth Buttons */}
+        {/* Auth Buttons + Profile Badge */}
         <div className="hidden md:flex items-center space-x-4">
           {!isLoggedIn ? (
             <>
@@ -48,12 +69,18 @@ function Header() {
               </Link>
             </>
           ) : (
-            <button
-              onClick={() => console.log("logout")}
-              className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition"
-            >
-              Logout
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handleLogout}
+                className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition"
+              >
+                Logout
+              </button>
+              {/* Profile Badge */}
+              <Link to="/profile"  className="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-semibold uppercase">
+                {username ? username[0] : "U"}
+              </Link>
+            </div>
           )}
         </div>
 
@@ -90,20 +117,6 @@ function Header() {
       {menuOpen && (
         <div className="md:hidden bg-white shadow-md border-t border-gray-100">
           <nav className="flex flex-col p-4 space-y-2 text-gray-700">
-            <Link to="/" className="hover:text-blue-600 transition">
-              Home
-            </Link>
-            <Link to="/posts" className="hover:text-blue-600 transition">
-              Posts
-            </Link>
-            {isLoggedIn && (
-              <Link to="/create-post" className="hover:text-blue-600 transition">
-                Create Post
-              </Link>
-            )}
-
-            <hr className="my-2" />
-
             {!isLoggedIn ? (
               <>
                 <Link
@@ -120,12 +133,24 @@ function Header() {
                 </Link>
               </>
             ) : (
-              <button
-                onClick={() => console.log("logout")}
-                className="bg-red-500 text-white px-4 py-2 rounded-md text-center hover:bg-red-600 transition"
-              >
-                Logout
-              </button>
+              <div className=" items-center gap-4">
+                {/* Profile Badge + Username */}
+                <Link to="/profie" className="flex items-center gap-2 my-3">
+                  <div className="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-semibold uppercase">
+                    {username ? username[0] : "U"}
+                  </div>
+                  <p className="font-medium text-gray-800">{username}</p>
+                </Link>
+
+                {/* Logout Button */}
+                <button
+                  onClick={handleLogout}
+                  className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition"
+                >
+                  Logout
+                </button>
+              </div>
+
             )}
           </nav>
         </div>

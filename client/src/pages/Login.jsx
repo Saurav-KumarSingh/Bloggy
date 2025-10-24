@@ -33,7 +33,7 @@ function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-blue-100">
+    <div className="min-h-screen flex items-center justify-center">
       <div className="bg-white shadow-2xl rounded-xl p-8 w-full max-w-md">
         <h2 className="text-3xl font-extrabold text-gray-800 text-center mb-6">
           Welcome Back 👋

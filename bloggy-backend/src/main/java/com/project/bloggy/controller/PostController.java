@@ -72,4 +72,10 @@ public class PostController {
         }
     }
 
+    @GetMapping("/my-posts")
+    public List<PostResponse> getMyPosts(Authentication authentication) {
+        return postService.getPostsByCurrentUser(authentication);
+    }
+
+
 }

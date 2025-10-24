@@ -207,4 +207,48 @@ public class PostService {
         postRepository.delete(post);
     }
 
+
+
+    public List<PostResponse> getPostsByCurrentUser(Authentication authentication) {
+        String email = authentication.getName();
+
+        // Find the logged-in user
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // Fetch posts by this user
+        List<Post> posts = postRepository.findByUserId(user.getId());
+        List<PostResponse> responseList = new ArrayList<>();
+
+        for (Post post : posts) {
+            PostResponse postResponse = new PostResponse();
+            postResponse.setId(post.getId());
+            postResponse.setTitle(post.getTitle());
+            postResponse.setContent(post.getContent());
+            postResponse.setImageUrl(post.getImageUrl());
+            postResponse.setCreatedAt(post.getCreatedAt());
+            postResponse.setUpdatedAt(post.getUpdatedAt());
+            postResponse.setUserId(user.getId());
+            postResponse.setUsername(user.getUsername());
+
+            // Add comments
+            List<CommentResponse> commentResponses = new ArrayList<>();
+            for (Comment comment : post.getComments()) {
+                CommentResponse cr = new CommentResponse();
+                cr.setId(comment.getId());
+                cr.setContent(comment.getContent());
+                cr.setUserId(comment.getUser().getId());
+                cr.setUsername(comment.getUser().getUsername());
+                cr.setCreatedAt(comment.getCreatedAt());
+                commentResponses.add(cr);
+            }
+            postResponse.setComments(commentResponses);
+
+            responseList.add(postResponse);
+        }
+
+        return responseList;
+    }
+
+
 }
